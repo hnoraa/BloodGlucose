@@ -1,3 +1,11 @@
+## To Do
+ - [ ] Add the ability to edit records
+ - [ ] Add multi-curve comparisons
+ - [ ] Export to PDF with chart and data
+ - [ ] Update the README
+ - [ ] Add a table for medicine information
+
+## Details
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
