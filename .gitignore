@@ -2,6 +2,8 @@
 
 # dependencies
 /node_modules
+**/node_modules
+bloodglucose-app\node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -15,6 +17,7 @@
 
 # next.js
 /.next/
+bloodglucose-app/.next/
 /out/
 
 # production
