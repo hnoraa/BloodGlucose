@@ -6,6 +6,7 @@ import { GlucoseRecord } from '@/types';
 interface RecordsTableProps {
   records: GlucoseRecord[];
   onDelete: (id: number) => void;
+  onEdit: (id: number) => void;
   isLoading?: boolean;
 }
 
@@ -45,7 +46,7 @@ function calculateStats(record: GlucoseRecord) {
  * Records Table Component
  * Displays all glucose records in a table format
  */
-export function RecordsTable({ records, onDelete, isLoading = false }: RecordsTableProps) {
+export function RecordsTable({ records, onDelete, onEdit, isLoading = false }: RecordsTableProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -114,6 +115,11 @@ export function RecordsTable({ records, onDelete, isLoading = false }: RecordsTa
                     {stats.avg}
                   </td>
                   <td className="px-6 py-4 text-sm text-center">
+                    <button 
+                      onClick={() => onEdit(record.id)} 
+                      className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition text-xs mr-2">
+                      Edit
+                    </button>
                     <button
                       onClick={() => {
                         if (confirm('Are you sure you want to delete this record?')) {

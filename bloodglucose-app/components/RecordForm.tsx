@@ -1,14 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { DrawDataPoint } from '@/types';
 
 interface RecordFormProps {
   onSubmit: (data: {
     date: string;
     dosage: string;
+    first_dose_time: string | undefined;
+    second_dose_time: string | undefined;
     drawData: DrawDataPoint[];
   }) => Promise<void>;
+  editingRecord: {
+    date: string;
+    dosage: string;
+    first_dose_time?: string;
+    second_dose_time?: string;
+    drawData: DrawDataPoint[];
+  } | null;
   isLoading?: boolean;
 }
 
@@ -80,9 +89,9 @@ function timeToUTC(dateString: string, timeString: string): string {
  * - Server stores UTC times in database
  * - When displayed, times are converted back to local and shown as 12-hour AM/PM
  */
-export function RecordForm({ onSubmit, isLoading = false }: RecordFormProps) {
+export function RecordForm({ onSubmit, editingRecord, isLoading = false }: RecordFormProps) {
   // Initialize with today's date in local timezone
-  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
 
   // Form state
   const [date, setDate] = useState(today);
@@ -150,7 +159,7 @@ export function RecordForm({ onSubmit, isLoading = false }: RecordFormProps) {
    * Build draw data with error handling (has side effects)
    * Used for form submission to show validation errors to user
    */
-  const buildDrawData = (): DrawDataPoint[] | null => {
+  const buildDrawData = (date: string): DrawDataPoint[] | null => {
     const drawData: DrawDataPoint[] = [];
 
     for (const reading of readings) {
@@ -159,23 +168,18 @@ export function RecordForm({ onSubmit, isLoading = false }: RecordFormProps) {
         return null;
       }
 
-      try {
-        const utcTime = timeToUTC(date, reading.time);
-        const readingValue = parseFloat(reading.reading);
-
-        if (isNaN(readingValue)) {
-          setError(`Invalid reading value: ${reading.reading}`);
-          return null;
-        }
-
-        drawData.push({
-          time: utcTime,
-          reading: readingValue,
-        });
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Invalid time format');
+      const readingValue = parseFloat(reading.reading);
+      if (isNaN(readingValue)) {
+        setError(`Invalid reading value: ${reading.reading}`);
         return null;
       }
+
+      const utcTime = timeToUTC(date, reading.time);
+
+      drawData.push({
+        time: utcTime,
+        reading: readingValue,
+      });
     }
 
     return drawData;
@@ -190,15 +194,12 @@ export function RecordForm({ onSubmit, isLoading = false }: RecordFormProps) {
       return;
     }
 
-    const drawData = buildDrawData();
+    const drawData = buildDrawData(date);
     if (!drawData) {
       return;
     }
 
     try {
-      // Convert local date to UTC for submission
-      const utcDate = new Date(date).toISOString().split('T')[0] + 'T00:00:00Z';
-
       // Convert dose times to UTC if provided
       let utcFirstDoseTime: string | undefined;
       let utcSecondDoseTime: string | undefined;
@@ -222,7 +223,7 @@ export function RecordForm({ onSubmit, isLoading = false }: RecordFormProps) {
       }
 
       await onSubmit({
-        date: utcDate,
+        date: date,
         dosage,
         first_dose_time: utcFirstDoseTime,
         second_dose_time: utcSecondDoseTime,

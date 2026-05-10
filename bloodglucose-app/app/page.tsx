@@ -24,6 +24,7 @@ export default function Home() {
   const [isFormLoading, setIsFormLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editingRecord, setEditingRecord] = useState<GlucoseRecord | null>(null);
 
   /**
    * Fetch all records on component mount
@@ -101,6 +102,15 @@ export default function Home() {
   };
 
   /**
+   * Handle editing a glucose record
+   * Called when user clicks Edit in the records table
+   * Currently shows an alert as edit functionality is not implemented yet
+   */
+  const handleEditRecord = async (id: number) => {
+    alert('Edit functionality is not implemented yet. Record ID: ' + id);
+  }
+
+  /**
    * Handle deleting a glucose record
    * Called when user clicks Delete in the records table
    * Refreshes the records list after deletion
@@ -121,6 +131,7 @@ export default function Home() {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error deleting record';
       setError(message);
+      throw err;
     }
   };
 
@@ -173,7 +184,7 @@ export default function Home() {
           {/* Record Form - shown when user clicks "Add New Record" */}
           {showForm && (
             <div className="mb-6">
-              <RecordForm onSubmit={handleCreateRecord} isLoading={isFormLoading} />
+              <RecordForm onSubmit={handleCreateRecord} editingRecord={null} isLoading={isFormLoading} />
             </div>
           )}
 
@@ -181,6 +192,7 @@ export default function Home() {
           <RecordsTable
             records={records}
             onDelete={handleDeleteRecord}
+            onEdit={handleEditRecord}
             isLoading={isLoading}
           />
         </section>

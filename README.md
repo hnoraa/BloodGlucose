@@ -4,6 +4,12 @@
  - [ ] Export to PDF with chart and data
  - [ ] Update the README
  - [ ] Add a table for medicine information
+ - [ ] Pagination
+ - [ ] Sort by newest date first
+ - [ ] Row select shows that rows graph
+ - [ ] Determine appropriate graph axes
+ - [ ] When I enter a new record, it shows the day as the daye before the day I entered
+ - [ ] When I add in readings, it should take the date on the form
 
 ## Details
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
