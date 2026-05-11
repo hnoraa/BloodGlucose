@@ -7,15 +7,23 @@ interface RecordsTableProps {
   records: GlucoseRecord[];
   onDelete: (id: number) => void;
   onEdit: (id: number) => void;
+  onView: (id: number) => void;
   isLoading?: boolean;
 }
 
 /**
  * Convert UTC date to local date string
  */
-function formatDateLocal(utcDateString: string): string {
+function formatDateLocal(dateString: string): string {
   try {
-    const date = new Date(utcDateString);
+    const [year, month, day] = dateString.split('-');
+
+    const date = new Date(
+      parseInt(year),
+      parseInt(month) - 1,
+      parseInt(day)
+    );
+
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -46,7 +54,7 @@ function calculateStats(record: GlucoseRecord) {
  * Records Table Component
  * Displays all glucose records in a table format
  */
-export function RecordsTable({ records, onDelete, onEdit, isLoading = false }: RecordsTableProps) {
+export function RecordsTable({ records, onDelete, onEdit, onView, isLoading = false }: RecordsTableProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -115,6 +123,11 @@ export function RecordsTable({ records, onDelete, onEdit, isLoading = false }: R
                     {stats.avg}
                   </td>
                   <td className="px-6 py-4 text-sm text-center">
+                    <button 
+                      onClick={() => onView(record.id)} 
+                      className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition text-xs mr-2">
+                      View
+                    </button>
                     <button 
                       onClick={() => onEdit(record.id)} 
                       className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition text-xs mr-2">

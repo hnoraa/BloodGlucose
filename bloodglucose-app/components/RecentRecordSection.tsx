@@ -12,9 +12,16 @@ interface RecentRecordSectionProps {
 /**
  * Convert UTC date to local date string
  */
-function formatDateLocal(utcDateString: string): string {
+function formatDateLocal(dateString: string): string {
   try {
-    const date = new Date(utcDateString);
+     const [year, month, day] = dateString.split('-');
+
+    const date = new Date(
+      parseInt(year),
+      parseInt(month) - 1,
+      parseInt(day)
+    );
+
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
@@ -23,6 +30,30 @@ function formatDateLocal(utcDateString: string): string {
     });
   } catch {
     return 'Invalid date';
+  }
+}
+
+/**
+ * Convert UTC time string to local time in HH:MM AM/PM format
+ * 
+ * Handles browser timezone conversion automatically.
+ * Example: "2026-05-09T08:00:00Z" -> "8:00 AM"
+ * 
+ * @param utcTimeString - ISO 8601 UTC datetime string
+ * @returns Local time formatted as "H:MM AM/PM"
+ */
+function formatTimeAMPM(utcTimeString: string | undefined): string {
+  try {
+    if (!utcTimeString) return 'Not specified';
+    const date = new Date(utcTimeString);
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+    const displayMinutes = minutes.toString().padStart(2, '0');
+    return `${displayHours}:${displayMinutes} ${ampm}`;
+  } catch {
+    return 'Invalid';
   }
 }
 
@@ -53,8 +84,8 @@ export function RecentRecordSection({
   return (
     <div className="w-full bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200 p-6">
       <div className="mb-4">
-        <h2 className="text-2xl font-bold text-gray-800">Most Recent Record</h2>
-        <p className="text-sm text-gray-600 mt-1">{formatDateLocal(record.date)}</p>
+        <h2 className="text-2xl font-bold text-gray-800">Curve Data <span className="text-sm text-gray-600 mt-1">From: {formatDateLocal(record.date)}</span></h2>
+        <p className="text-gray-600 mt-1">First Insulin Shot: {formatTimeAMPM(record.first_dose_time)} | Second Insulin Shot: {formatTimeAMPM(record.second_dose_time)}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-6 md:grid-cols-4">

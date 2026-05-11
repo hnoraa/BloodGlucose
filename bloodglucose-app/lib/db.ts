@@ -189,6 +189,8 @@ function parseRecord(row: any): GlucoseRecord {
     id: row.id,
     date: row.date,
     dosage: row.dosage,
+    first_dose_time: row.first_dose_time || undefined,
+    second_dose_time: row.second_dose_time || undefined,
     drawData: JSON.parse(row.drawData),
     created_at: row.created_at,
     updated_at: row.updated_at,

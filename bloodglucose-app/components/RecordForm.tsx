@@ -25,6 +25,7 @@ interface ReadingInput {
   id: string;
   time: string; // HH:MM 24-hour format (local timezone)
   reading: string; // String for form input, will convert to number
+  site?: string; // Optional site field for future use
 }
 
 /**
@@ -69,6 +70,21 @@ function timeToUTC(dateString: string, timeString: string): string {
   }
 }
 
+function utcToLocalTime(utcDateTime?: string): string {
+  if (!utcDateTime) return '';
+
+  const date = new Date(utcDateTime);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  return date.toLocaleTimeString('en-CA', {
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 /**
  * Record Form Component
  * 
@@ -99,16 +115,46 @@ export function RecordForm({ onSubmit, editingRecord, isLoading = false }: Recor
   const [firstDoseTime, setFirstDoseTime] = useState('');
   const [secondDoseTime, setSecondDoseTime] = useState('');
   const [readings, setReadings] = useState<ReadingInput[]>([
-    { id: '1', time: '08:00', reading: '' },
-    { id: '2', time: '12:00', reading: '' },
-    { id: '3', time: '16:00', reading: '' },
+    { id: '1', time: '08:00', reading: '', site: '' },
+    { id: '2', time: '12:00', reading: '', site: '' },
+    { id: '3', time: '16:00', reading: '', site: '' },
   ]);
   const [error, setError] = useState<string | null>(null);
   const [showJsonPreview, setShowJsonPreview] = useState(false);
 
+  useEffect(() => {
+    if (editingRecord) {
+      setDate(editingRecord.date);
+      setDosage(editingRecord.dosage);
+      setFirstDoseTime(utcToLocalTime(editingRecord.first_dose_time));
+      setSecondDoseTime(utcToLocalTime(editingRecord.second_dose_time));
+      setReadings(
+        editingRecord.drawData.map((point, index) => ({
+          id: (index + 1).toString(),
+          time: utcToLocalTime(point.time),
+          reading: point.reading.toString(),
+          site: point.site || '',
+        }))
+      );
+      setError(null);
+      return;
+    }
+
+    setDate(today);
+    setDosage('');
+    setFirstDoseTime('');
+    setSecondDoseTime('');
+    setReadings([
+      { id: '1', time: '08:00', reading: '', site: '' },
+      { id: '2', time: '12:00', reading: '', site: '' },
+      { id: '3', time: '16:00', reading: '', site: '' },
+    ]);
+    setError(null);
+  }, [editingRecord, today]);
+
   const addReading = () => {
     const newId = (Math.max(...readings.map((r) => parseInt(r.id))) + 1).toString();
-    setReadings([...readings, { id: newId, time: '00:00', reading: '' }]);
+    setReadings([...readings, { id: newId, time: '00:00', reading: '', site: '' }]);
   };
 
   const removeReading = (id: string) => {
@@ -117,7 +163,7 @@ export function RecordForm({ onSubmit, editingRecord, isLoading = false }: Recor
     }
   };
 
-  const updateReading = (id: string, field: 'time' | 'reading', value: string) => {
+  const updateReading = (id: string, field: 'time' | 'reading' | 'site', value: string) => {
     setReadings(
       readings.map((r) => (r.id === id ? { ...r, [field]: value } : r))
     );
@@ -146,6 +192,7 @@ export function RecordForm({ onSubmit, editingRecord, isLoading = false }: Recor
         drawData.push({
           time: utcTime,
           reading: readingValue,
+          site: reading.site || undefined,
         });
       } catch (e) {
         return null; // Return null silently
@@ -179,6 +226,7 @@ export function RecordForm({ onSubmit, editingRecord, isLoading = false }: Recor
       drawData.push({
         time: utcTime,
         reading: readingValue,
+        site: reading.site || undefined,
       });
     }
 
@@ -236,9 +284,9 @@ export function RecordForm({ onSubmit, editingRecord, isLoading = false }: Recor
       setFirstDoseTime('');
       setSecondDoseTime('');
       setReadings([
-        { id: '1', time: '08:00', reading: '' },
-        { id: '2', time: '12:00', reading: '' },
-        { id: '3', time: '16:00', reading: '' },
+        { id: '1', time: '08:00', reading: '', site: '' },
+        { id: '2', time: '12:00', reading: '', site: '' },
+        { id: '3', time: '16:00', reading: '', site: '' },
       ]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create record');
@@ -250,7 +298,9 @@ export function RecordForm({ onSubmit, editingRecord, isLoading = false }: Recor
 
   return (
     <div className="w-full bg-white rounded-lg shadow-md p-6">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">Add New Record</h3>
+      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        {editingRecord ? 'Edit Record' : 'Add New Record'}
+      </h3>
 
       {error && (
         <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
@@ -365,6 +415,13 @@ export function RecordForm({ onSubmit, editingRecord, isLoading = false }: Recor
                     className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                   <span className="text-xs text-gray-500">mg/dL</span>
+                  <input
+                    type="text"
+                    placeholder="Site (optional)"
+                    value={reading.site}
+                    onChange={(e) => updateReading(reading.id, 'site', e.target.value)}
+                    className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
                   <button
                     type="button"
                     onClick={() => removeReading(reading.id)}
@@ -403,7 +460,13 @@ export function RecordForm({ onSubmit, editingRecord, isLoading = false }: Recor
             disabled={isLoading}
             className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Creating...' : 'Create Record'}
+            {isLoading
+              ? editingRecord
+                ? 'Saving...'
+                : 'Creating...'
+              : editingRecord
+                ? 'Update Record'
+                : 'Create Record'}
           </button>
         </div>
       </form>

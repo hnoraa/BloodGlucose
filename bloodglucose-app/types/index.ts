@@ -10,6 +10,7 @@
 export interface DrawDataPoint {
   time: string; // ISO 8601 UTC format (e.g., "2026-05-09T08:00:00Z")
   reading: number; // Glucose reading value as float (mg/dL)
+  site?: string; // Optional field for injection site (e.g., "abdomen", "arm")
 }
 
 /**

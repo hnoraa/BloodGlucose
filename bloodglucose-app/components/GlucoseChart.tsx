@@ -123,7 +123,7 @@ export function GlucoseChart({ data, title = 'Glucose Readings' }: GlucoseChartP
             tick={{ fontSize: 12 }}
           />
           {/* Y-axis displays glucose values in mg/dL */}
-          <YAxis label={{ value: 'Glucose (mg/dL)', angle: -90, position: 'insideLeft' }} />
+          <YAxis label={{ value: '(mg/dL)', angle: -90, position: 'insideLeft' }} />
           {/* Tooltip shows value on hover */}
           <Tooltip
             formatter={(value) => `${value} mg/dL`}

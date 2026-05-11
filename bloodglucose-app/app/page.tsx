@@ -25,6 +25,7 @@ export default function Home() {
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editingRecord, setEditingRecord] = useState<GlucoseRecord | null>(null);
+  const [viewingRecord, setViewingRecord] = useState<GlucoseRecord | null>(null);
 
   /**
    * Fetch all records on component mount
@@ -70,6 +71,8 @@ export default function Home() {
   const handleCreateRecord = async (data: {
     date: string;
     dosage: string;
+    first_dose_time: string | undefined;
+    second_dose_time: string | undefined;
     drawData: Array<{ time: string; reading: number }>;
   }) => {
     try {
@@ -91,6 +94,7 @@ export default function Home() {
       // Refresh records and close form
       await fetchRecords();
       setShowForm(false);
+      setEditingRecord(null);
       setError(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error creating record';
@@ -101,14 +105,94 @@ export default function Home() {
     }
   };
 
+  const handleUpdateRecord = async (
+    id: number,
+    data: {
+      date: string;
+      dosage: string;
+      first_dose_time: string | undefined;
+      second_dose_time: string | undefined;
+      drawData: Array<{ time: string; reading: number }>;
+    }
+  ) => {
+    try {
+      setIsFormLoading(true);
+      const response = await fetch(`/api/records/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update record');
+      }
+
+      await fetchRecords();
+      setShowForm(false);
+      setEditingRecord(null);
+      setError(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Error updating record';
+      setError(message);
+      throw err;
+    } finally {
+      setIsFormLoading(false);
+    }
+  };
+
+  const handleSubmitRecord = async (data: {
+    date: string;
+    dosage: string;
+    first_dose_time: string | undefined;
+    second_dose_time: string | undefined;
+    drawData: Array<{ time: string; reading: number }>;
+  }) => {
+    if (editingRecord) {
+      await handleUpdateRecord(editingRecord.id, data);
+    } else {
+      await handleCreateRecord(data);
+    }
+  };
+
+  const handleToggleForm = () => {
+    if (showForm) {
+      setShowForm(false);
+      setEditingRecord(null);
+    } else {
+      setShowForm(true);
+      setEditingRecord(null);
+      setViewingRecord(null);
+    }
+  };
+
+  /**
+   * Handle viewing a glucose record
+   * Called when user clicks View in the records table
+   */
+  const handleViewRecord = async (id: number) => {
+    const record = records.find(r => r.id === id);
+
+    if (record) {
+      setViewingRecord(record);
+    }
+  };
+
   /**
    * Handle editing a glucose record
    * Called when user clicks Edit in the records table
-   * Currently shows an alert as edit functionality is not implemented yet
    */
   const handleEditRecord = async (id: number) => {
-    alert('Edit functionality is not implemented yet. Record ID: ' + id);
-  }
+    const record = records.find(r => r.id === id);
+    if (record) {
+      setEditingRecord(record);
+      setShowForm(true);
+      setViewingRecord(null);
+    }
+  };
 
   /**
    * Handle deleting a glucose record
@@ -136,7 +220,11 @@ export default function Home() {
   };
 
   // The latest record is the first one (sorted by date DESC from API)
-  const latestRecord = records.length > 0 ? records[0] : null;
+  useEffect(() => {
+    if (!viewingRecord && records.length > 0) {
+      setViewingRecord(records[0]);
+    }
+  }, [records, viewingRecord]);
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -165,7 +253,7 @@ export default function Home() {
 
         {/* Recent Record Section - shows latest record with chart */}
         <section className="mb-8">
-          <RecentRecordSection record={latestRecord} isLoading={isLoading} />
+          <RecentRecordSection record={viewingRecord} isLoading={isLoading} />
         </section>
 
         {/* Records Table Section - all records with add form */}
@@ -174,7 +262,7 @@ export default function Home() {
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold text-gray-900">All Records</h2>
             <button
-              onClick={() => setShowForm(!showForm)}
+              onClick={handleToggleForm}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
             >
               {showForm ? 'Cancel' : '+ Add New Record'}
@@ -184,7 +272,7 @@ export default function Home() {
           {/* Record Form - shown when user clicks "Add New Record" */}
           {showForm && (
             <div className="mb-6">
-              <RecordForm onSubmit={handleCreateRecord} editingRecord={null} isLoading={isFormLoading} />
+              <RecordForm onSubmit={handleSubmitRecord} editingRecord={editingRecord} isLoading={isFormLoading} />
             </div>
           )}
 
@@ -192,6 +280,7 @@ export default function Home() {
           <RecordsTable
             records={records}
             onDelete={handleDeleteRecord}
+            onView={handleViewRecord}
             onEdit={handleEditRecord}
             isLoading={isLoading}
           />

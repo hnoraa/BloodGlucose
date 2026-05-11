@@ -6,9 +6,9 @@
  - [ ] Add a table for medicine information
  - [ ] Pagination
  - [X] Sort by newest date first
- - [ ] Row select shows that rows graph
+ - [X] Row select shows that rows graph
  - [ ] Determine appropriate graph axes
- - [ ] When I enter a new record, it shows the day as the daye before the day I entered
+ - [X] When I enter a new record, it shows the day as the daye before the day I entered
  - [X] When I add in readings, it should take the date on the form
 
 ## Details
